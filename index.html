@@ -827,10 +827,10 @@ const STEPS = [
   ['option', 'Poser une option', 'Plan de vente → un lot disponible des Marguerites 4', 'plan'],
   ['reservation', 'Convertir en réservation', 'L\u2019échéancier se génère seul', 'plan'],
   ['encaissement', 'Encaisser l\u2019avance', 'Fiche du lot ou Encaissements', 'encais'],
-  ['compromis', 'Signer le compromis', 'Bloqué tant que l\u2019avance n\u2019est pas encaissée', 'plan'],
+  ['compromis', 'Signer le compromis', 'Ventes & contrats → votre réservation, une fois l’avance encaissée', 'ventes'],
   ['decompte', 'Payer un décompte de chantier', 'Marchés &amp; travaux → visa OPC, conducteur, direction', 'travaux'],
   ['gros', 'Constater le gros œuvre', 'Juridique &amp; foncier → les appels de fonds partent seuls', 'juridique'],
-  ['mainlevee', 'Lever la mainlevée, signer un acte', 'Juridique, puis un lot en compromis des Marguerites 3', 'juridique'],
+  ['mainlevee', 'Lever la mainlevée, signer un acte', 'Juridique & foncier, puis un compromis des Marguerites 3', 'juridique'],
   ['tva', 'Déclarer la TVA du mois', 'Trésorerie &amp; fiscalité — calculée sur vos actions', 'fisc'],
   ['versement', 'Verser les loyers investisseurs', 'Appart-hôtel → trimestre en cours', 'hotel']
 ];
@@ -880,7 +880,7 @@ function vDash() {
     </div>
     <div class="steps">
       ${STEPS.map((s, i) => `
-        <button class="step${S.done[s[0]] ? ' done' : ''}" data-act="nav" data-v="${s[3]}">
+        <button class="step${S.done[s[0]] ? ' done' : ''}" data-act="stepGo" data-k="${s[0]}" data-v="${s[3]}">
           <span class="step-n"><span class="step-dot">${S.done[s[0]] ? '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 8.5 3.2 3L13 4.5"/></svg>' : ''}</span>Étape ${i + 1}</span>
           <span class="step-t">${s[1]}</span>
           <span class="step-s">${s[2]}</span>
@@ -1674,6 +1674,14 @@ function closeModal() {
    ========================================================= */
 const A = {
   nav(el) { S.ui.view = el.dataset.v; closeAll(); render(); window.scrollTo(0, 0); },
+  stepGo(el) {
+    const k = el.dataset.k, go = (v, f) => { closeAll(); S.ui.view = v; if (f) f(); render(); window.scrollTo(0, 0); };
+    const lo = S.ui.lastOpt && lotOf(S.ui.lastOpt), lr = S.ui.lastResa && lotOf(S.ui.lastResa);
+    if (k === 'reservation' && lo && lo.statut === 'o') { go('plan', () => { S.ui.prog = lo.prog; S.ui.filtre = 'all'; }); openLot(lo.id); return; }
+    if (k === 'compromis') { go('ventes', () => { S.ui.vProg = 'all'; S.ui.vEtape = 'reservation'; }); if (lr && lr.statut === 'r') openLot(lr.id); return; }
+    if (k === 'mainlevee' && S.mainlevee) { go('ventes', () => { S.ui.vProg = 'M3'; S.ui.vEtape = 'compromis'; }); return; }
+    go(el.dataset.v);
+  },
   prog(el) { S.ui.prog = el.dataset.id; S.ui.filtre = 'all'; render(); },
   filtre(el) { S.ui.filtre = el.dataset.id; render(); },
   crmF(el) { S.ui.crmF = el.dataset.id; render(); },
@@ -1706,7 +1714,7 @@ const A = {
     const l = lotOf(S.ui.lot), sel = document.getElementById('optClient'); if (!sel) return;
     const c = cl(sel.value);
     l.statut = 'o'; l.client = c.id; l.optionDate = TODAY; l.optionExp = addDays(TODAY, 7);
-    S.done.option = true; S.ui.pick = null; S.ui.flash = l.id;
+    S.done.option = true; S.ui.pick = null; S.ui.flash = l.id; S.ui.lastOpt = l.id;
     log('Option posée sur ' + l.id + ' pour ' + c.nom + ' — expire le ' + fd(l.optionExp));
     render(); toast('Option posée sur ' + l.id + ' jusqu’au ' + fd(l.optionExp) + '.');
   },
@@ -1721,7 +1729,7 @@ const A = {
     S.seq.v++;
     const v = { id: 'VTE-2026-' + String(S.seq.v).padStart(4, '0'), lot: l.id, client: c.id, prix: l.prix, date: TODAY, etape: 'reservation',
                 dateCompromis: null, dateActe: null, ech: buildEch(PROGS[l.prog], l.prix, TODAY) };
-    S.ventes.push(v); l.statut = 'r'; l.optionExp = null; c.statut = 'client'; S.done.reservation = true; S.ui.flash = l.id;
+    S.ventes.push(v); l.statut = 'r'; l.optionExp = null; c.statut = 'client'; S.done.reservation = true; S.ui.flash = l.id; S.ui.lastResa = l.id;
     log('Réservation ' + v.id + ' — ' + c.nom + ' — ' + l.id + ' à ' + dh(l.prix) + ' DH ; avance de ' + dh(v.ech[0].montant) + ' DH appelée');
     render(); toast('Réservation créée. L’avance de 10 % est appelée — encaissez-la pour débloquer le compromis.');
   },
