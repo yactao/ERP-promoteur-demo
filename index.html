@@ -342,26 +342,55 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
   .steps{grid-template-columns:repeat(2,1fr)}
   .g2, .g2e, .g3{grid-template-columns:1fr}
 }
+/* chrome mobile et guidage */
+.hamb, .m-title, .dl-short{display:none}
+.nextbar{position:fixed; right:18px; bottom:18px; z-index:50; display:flex; align-items:center; gap:10px; background:var(--ink); color:var(--surface); border-radius:999px; padding:6px 6px 6px 16px; box-shadow:var(--shadow); font-size:12.5px; max-width:calc(100vw - 36px)}
+.nextbar .nb-k{font-family:var(--mono); font-size:11px; opacity:.65; white-space:nowrap}
+.nextbar .nb-t{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0}
+.nextbar .nb-go{background:var(--accent); color:var(--on-accent); border-radius:999px; padding:7px 14px; font-weight:700; white-space:nowrap; flex:none}
+.nextbar .nb-go:hover{background:var(--accent-ink)}
+.nextbar.done .nb-go{background:var(--surface-3); color:var(--ink)}
+.page{padding-bottom:84px}
+
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
-  .rail{position:static; height:auto; overflow:visible; border-right:0; border-bottom:1px solid var(--line)}
-  .brand{padding:12px 14px}
-  .brand .rail-reset{display:inline-flex; margin-left:auto}
-  .nav{flex-direction:row; flex-wrap:wrap; gap:5px; padding:10px 12px 12px}
-  .nav-group, .rail-foot{display:none}
-  .nav-item{width:auto; white-space:nowrap; border:1px solid var(--line); padding:5px 10px; font-size:12.5px; gap:7px}
-  .nav-item .nl{flex:none}
-  .nav-badge{margin-left:2px}
-  .kpis{grid-template-columns:1fr}
+  .rail{position:fixed; top:0; left:0; bottom:0; width:min(300px, 86vw); height:100%; z-index:65; transform:translateX(-102%); transition:transform .22s ease; box-shadow:var(--shadow)}
+  .rail.open{transform:none}
+  .hamb{display:grid; flex:none}
+  .m-title{display:flex; flex-direction:column; min-width:0; flex:1; line-height:1.2}
+  .m-brand{font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .m-view{font-family:var(--display); font-weight:700; font-size:16.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .topbar{padding:8px 12px; gap:8px}
+  .search{order:5; flex-basis:100%; max-width:none; min-width:0}
+  .top-actions{margin-left:0; flex:none}
+  .demo-flag, .asof{display:none}
+  .dl-long{display:none}
+  .dl-short{display:inline}
+  .disclaimer{padding:6px 12px; font-size:11.5px}
+  .page{padding:14px 12px 104px}
+  .page-head h1{font-size:21px}
+  .page-head p{font-size:12px}
+  .head-actions{margin-left:0; width:100%}
+  .head-actions .btn{flex:1}
+  .kpis{grid-template-columns:repeat(2,1fr); gap:10px}
+  .kpi{padding:11px 12px}
+  .k-val{font-size:21px}
   .strip{grid-template-columns:repeat(2,1fr)}
   .strip > div{border-right:0; border-bottom:1px solid var(--line)}
   .steps{grid-template-columns:repeat(2,1fr)}
   .pipe{grid-template-columns:repeat(2,1fr)}
-  .page{padding:14px}
-  .asof{display:none}
+  .tw table{min-width:600px}
+  .floor-row{grid-template-columns:50px 1fr}
+  .lots{grid-template-columns:repeat(auto-fill, minmax(100px,1fr))}
+  .tl-item{grid-template-columns:66px 16px 1fr; gap:8px}
+  .nextbar{left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); border-radius:12px; padding:8px 8px 8px 14px; max-width:none}
+  .nextbar .nb-t{white-space:normal; line-height:1.3}
+  .toast{bottom:96px}
 }
 @media (max-width:560px){
   .steps{grid-template-columns:1fr}
+  .step{flex-direction:row; align-items:center; gap:10px; padding:9px 12px}
+  .step-s{display:none}
   .frow{grid-template-columns:1fr}
 }
 </style>
@@ -387,6 +416,10 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
 
   <div class="main">
     <header class="topbar">
+      <button class="icon-btn hamb" id="hamb" data-act="menu" aria-label="Ouvrir le menu des modules" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg>
+      </button>
+      <div class="m-title"><span class="m-brand">Foncière Marrakech · démo</span><span class="m-view" id="mview">Tableau de bord</span></div>
       <div class="search">
         <label>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
@@ -402,7 +435,7 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
         </button>
       </div>
     </header>
-    <div class="disclaimer">Démonstration du logiciel Assas, réalisée par IT Synchronic. <b>Toutes les données sont fictives</b> : chiffres, acquéreurs, entreprises et opérations ne reflètent pas l'activité de Foncière Marrakech. Vos actions restent dans votre navigateur — « Réinitialiser la démo » remet tout à zéro.</div>
+    <div class="disclaimer"><span class="dl-long">Démonstration du logiciel Assas, réalisée par IT Synchronic. <b>Toutes les données sont fictives</b> : chiffres, acquéreurs, entreprises et opérations ne reflètent pas l'activité de Foncière Marrakech. Vos actions restent dans votre navigateur — « Réinitialiser la démo » remet tout à zéro.</span><span class="dl-short">Démo Assas par IT Synchronic — <b>données fictives</b>, sans lien avec l'activité réelle de Foncière Marrakech.</span></div>
     <main class="page" id="view"></main>
   </div>
 </div>
@@ -411,6 +444,7 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
 <aside class="drawer" id="drawer" aria-label="Fiche du lot"></aside>
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<nav class="nextbar" id="nextbar" aria-label="Étape suivante du parcours"></nav>
 
 <script>
 /* =========================================================
@@ -1613,8 +1647,22 @@ function simOut(l) {
 /* =========================================================
    Rendu, tiroir, modale, toast
    ========================================================= */
+function renderChrome() {
+  const n = NAV.find(x => x[0] === S.ui.view), mv = document.getElementById('mview');
+  if (mv && n) mv.innerHTML = n[1];
+  const nb = document.getElementById('nextbar'), k = STEPS.findIndex(x => !S.done[x[0]]);
+  if (k < 0) {
+    nb.className = 'nextbar done';
+    nb.innerHTML = '<span class="nb-t">Parcours terminé — 10 étapes sur 10</span><button class="nb-go" data-act="reset">Recommencer</button>';
+    return;
+  }
+  const st = STEPS[k];
+  nb.className = 'nextbar';
+  nb.innerHTML = '<span class="nb-k">' + (k + 1) + '/10</span><span class="nb-t">' + st[1] + '</span><button class="nb-go" data-act="stepGo" data-k="' + st[0] + '" data-v="' + st[3] + '">Y aller →</button>';
+}
 function render() {
   renderNav();
+  renderChrome();
   document.getElementById('view').innerHTML = VIEWS[S.ui.view]();
   if (S.ui.lot) document.getElementById('drawer').innerHTML = drawerHTML();
   S.ui.flash = null;
@@ -1629,6 +1677,8 @@ function openLot(id) {
 }
 function closeAll() {
   S.ui.lot = null;
+  document.querySelector('.rail').classList.remove('open');
+  document.getElementById('hamb').setAttribute('aria-expanded', 'false');
   document.getElementById('drawer').classList.remove('on');
   document.getElementById('modal').classList.remove('on');
   document.getElementById('scrim').classList.remove('on');
@@ -1674,6 +1724,14 @@ function closeModal() {
    ========================================================= */
 const A = {
   nav(el) { S.ui.view = el.dataset.v; closeAll(); render(); window.scrollTo(0, 0); },
+  menu() {
+    const r = document.querySelector('.rail');
+    if (r.classList.contains('open')) { closeAll(); return; }
+    closeAll();
+    r.classList.add('open'); document.getElementById('scrim').classList.add('on');
+    document.getElementById('hamb').setAttribute('aria-expanded', 'true');
+    const cur = r.querySelector('[aria-current="page"]'); if (cur) cur.focus();
+  },
   stepGo(el) {
     const k = el.dataset.k, go = (v, f) => { closeAll(); S.ui.view = v; if (f) f(); render(); window.scrollTo(0, 0); };
     const lo = S.ui.lastOpt && lotOf(S.ui.lastOpt), lr = S.ui.lastResa && lotOf(S.ui.lastResa);
