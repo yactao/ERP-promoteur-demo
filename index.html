@@ -344,10 +344,12 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
 }
 /* chrome mobile et guidage */
 .hamb, .m-title, .dl-short{display:none}
-.nextbar{position:fixed; right:18px; bottom:18px; z-index:50; display:flex; align-items:center; gap:10px; background:var(--ink); color:var(--surface); border-radius:999px; padding:6px 6px 6px 16px; box-shadow:var(--shadow); font-size:12.5px; max-width:calc(100vw - 36px)}
-.nextbar .nb-k{font-family:var(--mono); font-size:11px; opacity:.65; white-space:nowrap}
+.nextbar{position:fixed; right:18px; bottom:18px; z-index:50; display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border:1px solid var(--accent-line); border-radius:10px; padding:7px 7px 7px 14px; box-shadow:var(--shadow); font-size:12.5px; max-width:calc(100vw - 36px)}
+.nextbar .nb-k{font-size:10px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:var(--accent-ink); white-space:nowrap}
+.nextbar .nb-x{width:26px; height:26px; border-radius:6px; display:grid; place-items:center; color:var(--muted); flex:none; font-size:16px; line-height:1}
+.nextbar .nb-x:hover{background:var(--surface-2); color:var(--ink)}
 .nextbar .nb-t{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0}
-.nextbar .nb-go{background:var(--accent); color:var(--on-accent); border-radius:999px; padding:7px 14px; font-weight:700; white-space:nowrap; flex:none}
+.nextbar .nb-go{background:var(--accent); color:var(--on-accent); border-radius:7px; padding:6px 12px; font-weight:700; white-space:nowrap; flex:none}
 .nextbar .nb-go:hover{background:var(--accent-ink)}
 .nextbar.done .nb-go{background:var(--surface-3); color:var(--ink)}
 .page{padding-bottom:84px}
@@ -389,6 +391,11 @@ td.num, th.num{text-align:right; font-family:var(--mono); font-variant-numeric:t
 }
 @media (max-width:560px){
   .steps{grid-template-columns:1fr}
+  .nextbar{flex-wrap:wrap; row-gap:6px; padding:8px 8px 9px 14px}
+  .nextbar .nb-k{flex:1 1 60%}
+  .nextbar .nb-x{order:2}
+  .nextbar .nb-t{order:3; flex:1 1 55%; font-size:13px}
+  .nextbar .nb-go{order:4}
   .step{flex-direction:row; align-items:center; gap:10px; padding:9px 12px}
   .step-s{display:none}
   .frow{grid-template-columns:1fr}
@@ -910,7 +917,7 @@ function vDash() {
     <div class="panel-head">
       <h2>Parcours de démonstration</h2>
       <span class="sub">${nDone} étape${nDone > 1 ? 's' : ''} sur ${STEPS.length} · chaque étape se coche d’elle-même quand vous l’avez faite</span>
-      <div class="right"><span class="bar" style="width:120px"><i style="width:${nDone / STEPS.length * 100}%"></i></span></div>
+      <div class="right">${S.ui.tourOff ? '<button class="btn sm" data-act="tourOn">Réafficher le guide</button>' : ''}<span class="bar" style="width:120px"><i style="width:${nDone / STEPS.length * 100}%"></i></span></div>
     </div>
     <div class="steps">
       ${STEPS.map((s, i) => `
@@ -1651,14 +1658,16 @@ function renderChrome() {
   const n = NAV.find(x => x[0] === S.ui.view), mv = document.getElementById('mview');
   if (mv && n) mv.innerHTML = n[1];
   const nb = document.getElementById('nextbar'), k = STEPS.findIndex(x => !S.done[x[0]]);
+  if (S.ui.tourOff || S.ui.view === 'dash') { nb.style.display = 'none'; return; }
+  nb.style.display = '';
   if (k < 0) {
     nb.className = 'nextbar done';
-    nb.innerHTML = '<span class="nb-t">Parcours terminé — 10 étapes sur 10</span><button class="nb-go" data-act="reset">Recommencer</button>';
+    nb.innerHTML = '<span class="nb-k">Guide</span><span class="nb-t">Parcours terminé, 10 étapes sur 10</span><button class="nb-go" data-act="reset">Recommencer</button><button class="nb-x" data-act="tourOff" aria-label="Masquer le guide">×</button>';
     return;
   }
   const st = STEPS[k];
   nb.className = 'nextbar';
-  nb.innerHTML = '<span class="nb-k">' + (k + 1) + '/10</span><span class="nb-t">' + st[1] + '</span><button class="nb-go" data-act="stepGo" data-k="' + st[0] + '" data-v="' + st[3] + '">Y aller →</button>';
+  nb.innerHTML = '<span class="nb-k">Guide · ' + (k + 1) + '/10</span><span class="nb-t">' + st[1] + '</span><button class="nb-go" data-act="stepGo" data-k="' + st[0] + '" data-v="' + st[3] + '">Continuer →</button><button class="nb-x" data-act="tourOff" aria-label="Masquer le guide">×</button>';
 }
 function render() {
   renderNav();
@@ -1724,6 +1733,8 @@ function closeModal() {
    ========================================================= */
 const A = {
   nav(el) { S.ui.view = el.dataset.v; closeAll(); render(); window.scrollTo(0, 0); },
+  tourOff() { S.ui.tourOff = true; render(); toast('Guide masqué. Vous pouvez le réafficher depuis le tableau de bord.'); },
+  tourOn() { S.ui.tourOff = false; render(); toast('Guide réaffiché : il vous accompagne en bas de chaque écran.'); },
   menu() {
     const r = document.querySelector('.rail');
     if (r.classList.contains('open')) { closeAll(); return; }
